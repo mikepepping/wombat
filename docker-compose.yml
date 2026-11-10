@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  irb:
+    image: ruby:latest
+    volumes:
+      - .:/app:z
+    working_dir: /app
+    command: bash -c "bundle install && irb"
+    stdin_open: true
+    tty: true
+    network_mode: host
+    user: "${UID}:${GID}"
