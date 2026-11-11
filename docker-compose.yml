@@ -11,3 +11,13 @@ services:
     tty: true
     network_mode: host
     user: "${UID}:${GID}"
+  harness:
+    image: ruby:latest
+    volumes:
+      - .:/app:z
+    working_dir: /app
+    command: bash -c "bundle install && ruby main.rb"
+    stdin_open: true
+    tty: true
+    network_mode: host
+    user: "${UID}:${GID}"
