@@ -1,8 +1,14 @@
 require_relative 'src/providers/ollama_provider'
 require_relative 'src/session'
+require_relative'src/tools/bash_tool'
 
-provider = OllamaProvider.new("http://localhost:11434", "qwen2.5-coder:1.5b")
-session = Session.new(provider)
+tools = [
+  BashTool.new
+]
+
+provider = OllamaProvider.new("http://localhost:11434", "qwen3:4b")
+session = Session.new(provider, tools:)
+
 
 def print_seperator(role)
   puts [role, '-' * 10].join(':')
@@ -30,8 +36,10 @@ while true
   if content in COMMANDS
     COMMANDS[content].call
   else
-    session.chat(content)
-    print_message(session.history.last)
+    session.chat(content) do |msg|
+      puts msg
+      print_message(msg)
+    end
   end
 end
 
