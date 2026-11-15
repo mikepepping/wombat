@@ -1,9 +1,11 @@
 require_relative 'src/providers/ollama_provider'
 require_relative 'src/session'
 require_relative'src/tools/bash_tool'
+require_relative'src/tools/web_tool'
 
 tools = [
-  BashTool.new
+  BashTool.new,
+  WebTool.new
 ]
 
 provider = OllamaProvider.new("http://localhost:11434", "qwen3:4b")
@@ -37,7 +39,6 @@ while true
     COMMANDS[content].call
   else
     session.chat(content) do |msg|
-      puts msg
       print_message(msg)
     end
   end
