@@ -1,28 +1,28 @@
-class Message
-  attr_accessor :role, :content, :thinking, :tool_calls, :name
+ToolCall = Struct.new(:id, :name, :arguments, :extra)
 
-  def initialize(role, content, thinking: nil, tool_calls: nil, name: nil)
+class Message
+  attr_accessor :role, :content, :tool_calls, :tool_call_id
+
+  def initialize(role, content, tool_calls: nil, tool_call_id: nil)
     @role = role
     @content = content
-    @thinking = thinking
     @tool_calls = tool_calls
-    @name = name
+    @tool_call_id = tool_call_id
   end
 
   def append(message)
-    raise ArgumentError, "message is not the same role" unless message.role == role
+    raise ArgumentError, 'message is not the same role' unless message.role == role
 
     content << messsage.content
   end
 
   def to_h
     {
-      "role" => @role,
-      "content" => @content
+      'role' => @role,
+      'content' => @content
     }.tap do |h|
-      h["tool_calls"] = @tool_calls if @tool_calls
-      h["thinking"] = @thinking if @thinking
-      h["name"] = @name if @name
+      h['tool_calls'] = @tool_calls.map(&:to_h) if @tool_calls
+      h['tool_call_id'] = @tool_call_id if @tool_call_id
     end
   end
 end
