@@ -1,3 +1,5 @@
+ToolCall = Struct.new(:name, :arguments)
+
 class Provider
   def initialize
     raise NotImplementedError, "Cannot instantiate base class"
