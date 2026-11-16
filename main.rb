@@ -23,13 +23,12 @@ provider = OpenaiProvider.new(
 )
 session = Session.new(provider, tools:)
 
-
-def print_seperator(role)
+def print_separator(role)
   puts [role, '-' * 10].join(':')
 end
 
 def print_message(message)
-  print_seperator(message.role)
+  print_separator(message.role)
   puts message.content
   puts ""
 end
@@ -39,15 +38,16 @@ session.history.each do |message|
 end
 
 COMMANDS = {
-  "/exit" => Proc.new { exit(0) },
-  "/clear" => Proc.new { session.clear }
+  "/exit" => -> { exit(0) },
+  "/clear" => -> { session.clear }
 }
 
-while true
-  print_seperator('user')
-  content = gets.strip
+loop do
+  print_separator('user')
+  content = gets&.strip
+  break unless content
 
-  if content in COMMANDS
+  if COMMANDS.key?(content)
     COMMANDS[content].call
   else
     session.chat(content) do |msg|
@@ -57,4 +57,3 @@ while true
 end
 
 puts "Finished"
-  
