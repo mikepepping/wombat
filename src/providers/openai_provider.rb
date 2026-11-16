@@ -4,14 +4,12 @@ require_relative '../string'
 require_relative './provider'
 require_relative '../message'
 
-require 'debug'
-
 
 class OpenaiProvider < Provider
-  def initialize(host, model, api_key: nil)
+  def initialize(host, model, api_key_accessor: nil)
     @host = host
     @model = model
-    @api_key = api_key
+    @api_key_accessor = api_key_accessor
   end
 
   def chat(messages, tools: [])
@@ -28,9 +26,7 @@ class OpenaiProvider < Provider
     # TODO: stop reason and act appropriately
     # TODO: check if there are any choices and act appropriately
     # 
-    debugger
 
-    puts res.body
     choice = res.body.fetch('choices', []).first
     message = choice.fetch('message', {})
 
@@ -60,8 +56,8 @@ class OpenaiProvider < Provider
       f.request :json
       f.response :json
 
-      unless @api_key.nil? || @api_key.strip == ''
-        f.request :authorization, 'Bearer', @api_key
+      if @api_key_accessor
+        f.request :authorization, 'Bearer', @api_key_accessor.call
       end
     end
   end
