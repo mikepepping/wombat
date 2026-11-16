@@ -1,4 +1,5 @@
 require 'json'
+require 'securerandom'
 require_relative "message"
 
 class Session
@@ -26,9 +27,10 @@ class Session
     yield response if block_given?
 
     while response.tool_calls.any?
-      tool_responses = response.tool_calls
-                               .sort { |a, b| a.dig('function', 'index') <=> b.dig('function', 'index') }
-                               .map { |tool_call| tool_response(tool_call) } # NOTE: consider fanout
+      tool_responses = response.tool_calls.map do |tool_call|
+        # NOTE: consider fanout
+        tool_response(tool_call)
+      end
       
       tool_responses.each do |tool_response|
         yield tool_response if block_given?
@@ -47,7 +49,7 @@ class Session
     # WARNING: Currently rewrites the entire file
     open("#{id}.jsonl", "w") do |f|
       @history.each do |msg|
-        file.puts(JSON.dump(msg.to_h))
+        f.puts(JSON.dump(msg.to_h))
       end
     end
   end
@@ -55,12 +57,13 @@ class Session
   private
 
   def tool_response(tool_call)
-    tool_name = tool_call.dig('function', 'name')
-    tool_args = tool_call.dig('function', 'arguments')
+    arguments = tool_call.arguments.transform_keys(&:to_sym)
+    response = tools[tool_call.name].execute(**arguments)
+
     Message.new(
       "tool",
-      tools[tool_name].execute(**tool_args.transform_keys { |k| k.to_sym }),
-      name: tool_name
+      response,
+      tool_call_id: tool_call.id
     )
   end
 end
