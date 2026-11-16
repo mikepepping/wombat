@@ -1,33 +1,48 @@
 ToolParam = Struct.new(:name, :type, :description, :required)
-
 class Tool
   class << self
-    def name(tool_name)
-      @@name = tool_name
+    attr_reader :name, :description, :parameters
+
+    def inherited(subclass)
+      subclass.instance_variable_set(:@parameters, [])
     end
 
-    def description(desc)
-      @@description = desc
+    def name(value = nil)
+      @name = value if value
+      @name
+    end
+
+    def description(value = nil)
+      @description = value if value
+      @description
     end
 
     def parameter(name, type, description, required: false)
-      ToolParam.new(name, type, description, required).tap do |param|
-        @@parameters ||= []
-        @@parameters << param
-      end
+      @parameters ||= []
+
+      @parameters << ToolParam.new(
+        name,
+        type,
+        description,
+        required
+      )
+    end
+
+    def parameters
+      @parameters ||= []
     end
   end
 
   def name
-    @@name.freeze
+    self.class.name.freeze
   end
 
   def description
-    @@description.freeze
+    self.class.description.freeze
   end
 
   def parameters
-    @@parameters.freeze
+    self.class.parameters.freeze
   end
 
   def execute(**kwargs)
