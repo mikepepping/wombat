@@ -30,7 +30,7 @@ class OllamaProvider < Provider
       message.fetch('role', 'assistant'),
       message.fetch('content', ''),
       thinking: message.fetch('thinking', ''),
-      tool_calls: message.fetch('tool_calls', [])
+      tool_calls: message.fetch('tool_calls', []).map { |tc| convert_ollama_tool_call(tc) }
     )
   end
 
@@ -60,10 +60,18 @@ class OllamaProvider < Provider
               'type' => param.type,
               'description' => param.description
             }
-          end
+          end,
           'required' => tool.parameters.filter(&:required).map(&:name)
         },
       }
     }
+  end
+
+  def convert_ollama_tool_call(tool_call)
+    ToolCall.new(
+      tool_call.dig('function', 'index'),
+      tool_call.dig('function', 'name'),
+      tool_call.fig('function', 'arguments')
+    )
   end
 end
