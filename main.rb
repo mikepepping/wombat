@@ -1,14 +1,26 @@
-require_relative 'src/providers/ollama_provider'
+require_relative 'src/providers/openai_provider'
 require_relative 'src/session'
-require_relative'src/tools/bash_tool'
-require_relative'src/tools/web_tool'
+require_relative 'src/tools/bash_tool'
+require_relative 'src/tools/web_tool'
+
+require 'dotenv'
+Dotenv.load
 
 tools = [
   BashTool.new,
   WebTool.new
 ]
 
-provider = OllamaProvider.new("http://localhost:11434", "qwen3:4b")
+def get_api_key
+  ENV['WOMBAT_OPENAI_API_KEY']
+end
+
+#provider = OllamaProvider.new("http://localhost:11434", "qwen3:4b")
+provider = OpenaiProvider.new(
+  'https://generativelanguage.googleapis.com/v1beta/openai',
+  'gemini-3.5-flash-lite',
+  api_key_accessor: method(:get_api_key)
+)
 session = Session.new(provider, tools:)
 
 
