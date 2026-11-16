@@ -1,5 +1,4 @@
 require 'json'
-require_relative 'string'
 require_relative "message"
 
 class Session
@@ -14,7 +13,7 @@ class Session
     @history = history || []
     @provider = provider
     @tools = tools.each_with_object({}) do |tool, obj|
-      obj[snake_case(tool.class.name)] = tool
+      obj[tool.name] = tool
     end
   end
 

@@ -2,26 +2,27 @@ require 'faraday'
 require_relative '../tool'
 
 class WebTool < Tool
-  description "Access the web using only GET methods."
-  parameter :url, :string, 'the url of the site/page you want to read from the web', required: true
+  name 'get_url'
+  description 'Access a url/webpage as `http GET`'
+  parameter :url, :string, 'the url of the site/page you want to read from the internet', required: true
 
   def execute(url:)
     res = cached(url)
 
     JSON.pretty_generate(
       {
-        "response" => {
-          "url" => url,
-          "headers" => res.headers,
-          "status" => res.status,
-          "body" => res.body
+        'response' => {
+          'url' => url,
+          'headers' => res.headers,
+          'status' => res.status,
+          'body' => res.body
         }
       }
     )
   rescue Faraday::Error =>e
     JSON.pretty_generate(
       {
-        "error" => e.message
+        'error' => e.message
       }
     )
   end

@@ -3,7 +3,8 @@ require 'open3'
 require_relative '../tool'
 
 class BashTool < Tool
-  description "execute a bash command"
+  name 'run_bash_command'
+  description 'execute a bash command'
   parameter :command, :string, 'the full command to run including arguments', required: true
 
   def execute(command:)
@@ -11,9 +12,9 @@ class BashTool < Tool
 
     JSON.pretty_generate(
       {
-        "stdout" => captured.first,
-        "stderr" => captured[1],
-        "exited" => captured.last.exitstatus
+        'stdout' => captured.first,
+        'stderr' => captured[1],
+        'exited' => captured.last.exitstatus
       }
     )
   end

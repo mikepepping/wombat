@@ -51,7 +51,7 @@ class OllamaProvider < Provider
     {
       'type' => 'function',
       'function' => {
-        'name' =>snake_case(tool.class.name),
+        'name' => tool.name,
         'description' => tool.description,
         'parameters' => {
           'type' => 'object',
@@ -61,8 +61,8 @@ class OllamaProvider < Provider
               'description' => param.description
             }
           end
+          'required' => tool.parameters.filter(&:required).map(&:name)
         },
-        'required' => tool.parameters.filter(&:required).map(&:name)
       }
     }
   end

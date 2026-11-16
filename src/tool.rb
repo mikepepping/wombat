@@ -2,6 +2,10 @@ ToolParam = Struct.new(:name, :type, :description, :required)
 
 class Tool
   class << self
+    def name(tool_name)
+      @@name = tool_name
+    end
+
     def description(desc)
       @@description = desc
     end
@@ -12,6 +16,10 @@ class Tool
         @@parameters << param
       end
     end
+  end
+
+  def name
+    @@name.freeze
   end
 
   def description
