@@ -105,7 +105,7 @@ class OpenaiProvider < Provider
             'type' => 'function',
             'function' => {
               'name' => tc[:name],
-              'arguments' => JSON.generate(tc[:arugments])
+              'arguments' => JSON.generate(tc[:arguments])
             },
             'extra_content' => tc[:extra]
           }
