@@ -58,8 +58,16 @@ class Session
 
   def tool_response(tool_call)
     arguments = tool_call.arguments.transform_keys(&:to_sym)
-    response = tools[tool_call.name].execute(**arguments)
 
+    begin
+      response = tools[tool_call.name].execute(**arguments)
+    rescue ArgumentError => e
+      response = JSON.pretty_generate({
+          "error" => "Tool call failed - #{e.class.name}: #{e.message}"
+        })
+    end
+
+  
     Message.new(
       "tool",
       response,
