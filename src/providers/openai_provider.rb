@@ -6,6 +6,8 @@ require_relative '../message'
 
 
 class OpenaiProvider < Provider
+  MAX_RETRIES = 5
+
   def initialize(host, model, api_key_accessor: nil)
     @host = host
     @model = model
@@ -16,28 +18,48 @@ class OpenaiProvider < Provider
     available_tools = (tools || []).map { |tool| format_tool(tool) }
     formatted_messages = messages.map { |msg| format_message(msg) }
   
-    res = connection.post 'chat/completions', {
-      'model' => @model,
-      'messages' => formatted_messages,
-      'stream' => false,
-      'tools' => available_tools
-    }
 
     # TODO: stop reason and act appropriately
     # TODO: check if there are any choices and act appropriately
     # 
+    
+    retries = 0
+    response = nil
+    loop do
+      # TODO: consider faraday-retry middleware
+      begin
+        response = connection.post 'chat/completions', {
+          'model' => @model,
+          'messages' => formatted_messages,
+          'stream' => false,
+          'tools' => available_tools
+        }
+      rescue Faraday::ConnectionError, Faraday::TimeoutError => e
+        raise if retries >= MAX_RETRIES
+      end
 
-    choice = res.body.fetch('choices', []).first
+      break unless RETRY_STATUS_CODES.include?(response.status)
+
+      if retries >= MAX_RETRIES
+        raise Provider::RetryFailed, "Failed to receive chat response after #{retries} retries"
+      end
+
+      sleep(2**retries)
+      retries += 1
+    end
+    
+
+
+    choice = response.body.fetch('choices', []).first
     message = choice.fetch('message', {})
 
 
-    content = case choice['finish_reason']
-    when 'tool_calls'
+    content = if choice['finish_reason'] == 'tool_calls'
       [
         "Tool Calls:",
         *message['tool_calls'].map { |tc| tc.dig('function', 'name')}
       ].join("\n  *")
-    when 'stop'
+    else
       message['content']
     end
     
@@ -50,6 +72,8 @@ class OpenaiProvider < Provider
   end
 
   private
+
+  RETRY_STATUS_CODES = [420, 429, 503].freeze
 
   def connection
     Faraday.new @host do |f|
