@@ -1,5 +1,3 @@
-ToolCall = Struct.new(:name, :arguments)
-
 class ProviderError < StandardError
 end
 
