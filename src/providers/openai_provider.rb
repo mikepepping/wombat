@@ -52,6 +52,7 @@ class OpenaiProvider < Provider
 
     choice = response.body.fetch('choices', []).first
     message = choice.fetch('message', {})
+    usage_data = response.body['usage'] || {}
 
 
     content = if choice['finish_reason'] == 'tool_calls'
@@ -67,7 +68,10 @@ class OpenaiProvider < Provider
     Message.new(
       message.fetch('role'),
       content,
-      tool_calls: message.fetch('tool_calls', []).map { |tool_call| convert_tool_call(tool_call) }
+      tool_calls: message.fetch('tool_calls', []).map { |tool_call| convert_tool_call(tool_call) },
+      prompt_tokens: usage_data['prompt_tokens'],
+      completion_tokens: usage_data['completion_tokens'],
+      total_tokens: usage_data['total_tokens']
     )
   end
 
