@@ -2,6 +2,8 @@ require 'json'
 require 'securerandom'
 require_relative "message"
 
+Usage = Struct.new(:sent, :received, :total)
+
 class Session
   attr_reader :history, :id, :tools
 
@@ -16,6 +18,8 @@ class Session
     @tools = tools.each_with_object({}) do |tool, obj|
       obj[tool.name] = tool
     end
+    @tokens_sent = 0
+    @tokens_received = 0
   end
 
   def chat(content)
@@ -23,6 +27,8 @@ class Session
     user_message = Message.new("user", content)
     response = @provider.chat([*history, user_message], tools: tools.values) # TODO send tools as dict
     @history.append(user_message, response)
+    @tokens_sent += response.prompt_tokens
+    @tokens_received += response.completion_tokens
 
     yield response if block_given?
 
@@ -40,9 +46,21 @@ class Session
       yield response if block_given?
 
       @history.append(*tool_responses, response)
+      @tokens_sent += response.prompt_tokens
+      @tokens_received += response.completion_tokens
     end
 
     response
+  end
+
+  def usage
+    Usage.new(@tokens_sent, @tokens_received, @tokens_sent + @tokens_received)
+  end
+
+  def clear
+    @history.clear
+    @tokens_sent = 0
+    @tokens_received = 0
   end
 
   def save
