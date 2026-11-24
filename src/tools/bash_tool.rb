@@ -18,5 +18,9 @@ class BashTool < Tool
       }
     )
   end
+
+  def display_detail(arguments)
+    arguments['command'] || arguments[:command]
+  end
 end
 

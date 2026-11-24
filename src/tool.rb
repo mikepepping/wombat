@@ -48,4 +48,8 @@ class Tool
   def execute(**kwargs)
     raise NotImplementedError, 'execute is not implemented on base tool class'
   end
+
+  def display_detail(arguments)
+    nil
+  end
 end

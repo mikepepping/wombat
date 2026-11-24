@@ -39,5 +39,9 @@ class WebTool < Tool
     @@cached ||= {}
     @@cached[url] ||= Faraday.get(url)
   end
+
+  def display_detail(arguments)
+    arguments['url'] || arguments[:url]
+  end
 end
 

@@ -55,10 +55,16 @@ class OpenaiProvider < Provider
     usage_data = response.body['usage'] || {}
 
 
+    tool_calls = message.fetch('tool_calls', []).map { |tool_call| convert_tool_call(tool_call) }
+
     content = if choice['finish_reason'] == 'tool_calls'
       [
         "Tool Calls:",
-        *message['tool_calls'].map { |tc| tc.dig('function', 'name')}
+        *tool_calls.map do |tc|
+          tool_obj = tools.find { |t| t.name == tc.name }
+          detail = tool_obj&.display_detail(tc.arguments)
+          detail ? "#{tc.name} (#{detail})" : tc.name
+        end
       ].join("\n  *")
     else
       message['content']
@@ -68,7 +74,7 @@ class OpenaiProvider < Provider
     Message.new(
       message.fetch('role'),
       content,
-      tool_calls: message.fetch('tool_calls', []).map { |tool_call| convert_tool_call(tool_call) },
+      tool_calls: tool_calls,
       prompt_tokens: usage_data['prompt_tokens'],
       completion_tokens: usage_data['completion_tokens'],
       total_tokens: usage_data['total_tokens']
