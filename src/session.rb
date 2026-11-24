@@ -23,34 +23,29 @@ class Session
   end
 
   def chat(content)
-    # TODO: track context window use
     user_message = Message.new("user", content)
-    response = @provider.chat([*history, user_message], tools: tools.values) # TODO send tools as dict
-    @history.append(user_message, response)
-    @tokens_sent += response.prompt_tokens
-    @tokens_received += response.completion_tokens
+    @history.append(user_message)
 
-    yield response if block_given?
-
-    while response.tool_calls.any?
-      tool_responses = response.tool_calls.map do |tool_call|
-        # NOTE: consider fanout
-        tool_response(tool_call)
-      end
-      
-      tool_responses.each do |tool_response|
-        yield tool_response if block_given?
-      end
-
-      response = @provider.chat([*history, *tool_responses], tools: tools.values)
-      yield response if block_given?
-
-      @history.append(*tool_responses, response)
+    loop do
+      response = @provider.chat(history, tools: tools.values)
+      @history.append(response)
       @tokens_sent += response.prompt_tokens
       @tokens_received += response.completion_tokens
+
+      yield response if block_given?
+
+      break unless response.tool_calls&.any?
+
+      tool_responses = response.tool_calls.map do |tool_call|
+        tr = tool_response(tool_call)
+        yield tr if block_given?
+        tr
+      end
+
+      @history.append(*tool_responses)
     end
 
-    response
+    @history.last
   end
 
   def usage
@@ -65,7 +60,7 @@ class Session
 
   def save
     # WARNING: Currently rewrites the entire file
-    open("#{id}.jsonl", "w") do |f|
+    File.open("#{id}.jsonl", "w") do |f|
       @history.each do |msg|
         f.puts(JSON.dump(msg.to_h))
       end
@@ -93,4 +88,3 @@ class Session
     )
   end
 end
-
